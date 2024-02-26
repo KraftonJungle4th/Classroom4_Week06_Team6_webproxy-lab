@@ -17,27 +17,29 @@ void serve_dynamic(int fd, char *filename, char *cgiargs);
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg,
                  char *longmsg);
 
-int main(int argc, char **argv) {
-  int listenfd, connfd;
-  char hostname[MAXLINE], port[MAXLINE];
+int main(int argc, char **argv)
+{
+  int listenfd, connfd;                  //  듣기소켓, 연결소켓
+  char hostname[MAXLINE], port[MAXLINE]; // 호스트명 : 네트워크에 연결된 고유한 장치이름
   socklen_t clientlen;
-  struct sockaddr_storage clientaddr;
+  struct sockaddr_storage clientaddr; // 클라이언트주소 저장변수
 
   /* Check command line args */
-  if (argc != 2) {
-    fprintf(stderr, "usage: %s <port>\n", argv[0]);
+  if (argc != 2)
+  {
+    fprintf(stderr, "Usage: %s <port>\n", argv[0]);
     exit(1);
   }
 
   listenfd = Open_listenfd(argv[1]);
-  while (1) {
+
+  while (1)
+  {
     clientlen = sizeof(clientaddr);
-    connfd = Accept(listenfd, (SA *)&clientaddr,
-                    &clientlen);  // line:netp:tiny:accept
-    Getnameinfo((SA *)&clientaddr, clientlen, hostname, MAXLINE, port, MAXLINE,
-                0);
+    connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen); // line:netp:tiny:accept
+    Getnameinfo((SA *)&clientaddr, clientlen, hostname, MAXLINE, port, MAXLINE, 0);
     printf("Accepted connection from (%s, %s)\n", hostname, port);
-    doit(connfd);   // line:netp:tiny:doit
-    Close(connfd);  // line:netp:tiny:close
+    doit(connfd);  // line:netp:tiny:doit
+    Close(connfd); // line:netp:tiny:close
   }
 }
