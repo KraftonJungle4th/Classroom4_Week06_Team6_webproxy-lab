@@ -156,6 +156,7 @@ void serve_static(int fd, char *filename, int filesize){
 
   srcfd = Open(filename, O_RDONLY, 0); //filename을 읽기 전용으로 오픈
   // srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0); //srcfd의 파일을 filesize만큼 메모리에 매핑 
+  
   srcp = (char *)malloc(filesize); //filesize만큼의 메모리 할당
   Rio_readn(srcfd, srcp, filesize); //srcfd의 내용을 srcp에 저장
   Close(srcfd); //srcfd 닫기

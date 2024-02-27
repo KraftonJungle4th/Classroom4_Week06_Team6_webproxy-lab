@@ -1,9 +1,32 @@
 <html>
-<head><title>test</title></head>
+<head><title>test</title>
+  <script>
+    // function add(){
+    //   var form = document.getElementById("add-form");
+    //   var a = document.getElementById("a").value;
+    //   var b = document.getElementById("b").value;
+    //   document.location.href = `./cgi-bin/adder?${a}&${b}`;
+    //   // form.submit();
+    // }
+  </script>
+  </head>
 <body> 
-<video width="360" height="720" controls autoplay loop>
+<video width="360" height="720" controls autoplay loop muted>
   <source src="vid.MP4" type="video/MP4">
 </video>
-Dave O'Hallaron
+<br>
+Jaehee Nam
+<br>
+<br>
+Adder Program
+<br>
+<hr>
+
+<form id="add-form" method="GET" action="cgi-bin/adder">
+  <input type="text" name="n1" size="10">
++ <input type="text" name="n2" size="10">
+  <input type="submit" value="Add">
+</form>
+
 </body>
 </html>
