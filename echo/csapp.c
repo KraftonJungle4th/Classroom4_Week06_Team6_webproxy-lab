@@ -946,17 +946,17 @@ ssize_t Rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen)
  *       -1 with errno set for other errors.
  */
 /* $begin open_clientfd */
-int open_clientfd(char *hostname, char *port) {
+int open_clientfd(char *hostname, char *port) { // host:port 로의 연결을 열고, socket descriptor를 반환 (-2: getaddrinfo error, -1: other errors)
     int clientfd, rc;
     struct addrinfo hints, *listp, *p;
-
+    
     /* Get a list of potential server addresses */
-    memset(&hints, 0, sizeof(struct addrinfo)); //0000 0000 0000 0000
+    memset(&hints, 0, sizeof(struct addrinfo)); 
     hints.ai_socktype = SOCK_STREAM;  /* Open a connection */
     hints.ai_flags = AI_NUMERICSERV;  /* ... using a numeric port arg. */ //0100 0000 0000
     hints.ai_flags |= AI_ADDRCONFIG;  /* Recommended for connections */ // 0000 0010 0000
-    if ((rc = getaddrinfo(hostname, port, &hints, &listp)) != 0) {
-        fprintf(stderr, "getaddrinfo failed (%s:%s): %s\n", hostname, port, gai_strerror(rc));
+    if ((rc = getaddrinfo(hostname, port, &hints, &listp)) != 0) { 
+        fprintf(stderr, "getaddrinfo failed (%s:%s): %s\n", hostname, port, gai_strerror(rc)); //에러메시지 출력
         return -2;
     }
   
