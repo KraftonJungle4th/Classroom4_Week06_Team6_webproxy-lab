@@ -264,8 +264,8 @@ void serve_dynamic(int fd, char *filename, char *cgiargs, char *method)
   char buf[MAXLINE], *emptylist[] = {NULL};
 
   /* Return first part of HTTP response */
-  sprintf(buf, "%s 200 OK\r\n", http_version);
-  Rio_writen(fd, buf, strlen(buf));
+  sprintf(buf, "%s 200 OK\r\n", http_version);  //버퍼에 저장
+  Rio_writen(fd, buf, strlen(buf)); //fd에 저장
   sprintf(buf, "Server: Tiny Web Server\r\n");
   Rio_writen(fd, buf, strlen(buf));
 
