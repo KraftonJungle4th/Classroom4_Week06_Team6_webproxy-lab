@@ -11,17 +11,22 @@
 void doit(int fd);
 void read_requesthdrs(rio_t *rp);
 int parse_uri(char *uri, char *filename, char *cgiargs);
-void serve_static(int fd, char *filename, int filesize);
+void serve_static(int fd, char *filename, int filesize, char* method);
 void get_filetype(char *filename, char *filetype);
-void serve_dynamic(int fd, char *filename, char *cgiargs);
+void serve_dynamic(int fd, char *filename, char *cgiargs, char* method);
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg,
                  char *longmsg);
+void echo(int connfd); 
+
+char* http_version;
 
 int main(int argc, char **argv) {
   int listenfd, connfd;
   char hostname[MAXLINE], port[MAXLINE];
   socklen_t clientlen;
   struct sockaddr_storage clientaddr;
+
+
 
   /* Check command line args */
   if (argc != 2) {
@@ -37,6 +42,7 @@ int main(int argc, char **argv) {
     Getnameinfo((SA *)&clientaddr, clientlen, hostname, MAXLINE, port, MAXLINE,
                 0);
     printf("Accepted connection from (%s, %s)\n", hostname, port);
+
     doit(connfd);   // line:netp:tiny:doit
     Close(connfd);  // line:netp:tiny:close
   }
@@ -44,6 +50,8 @@ int main(int argc, char **argv) {
 
 void doit(int fd){
   int is_static;
+
+
   struct stat sbuf; //파일의 상태를 저장하는 구조체
   char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE]; 
   char filename[MAXLINE], cgiargs[MAXLINE]; 
@@ -56,12 +64,15 @@ void doit(int fd){
   printf("Request headers:\n"); 
   printf("%s", buf); 
   sscanf(buf, "%s %s %s", method, uri, version); //buf에서 문자열을 읽어 method, uri, version에 저장
-  if (strcasecmp(method, "GET")){ //method가 GET이 아니면
+  if (strcasecmp(method, "GET") && strcasecmp(method, "HEAD")) { //method가 GET이 아니면
     clienterror(fd, method, "501", "Not Implemented", //에러메시지 출력
                 "Tiny does not implement this method"); 
     return;
   }
+  // if (method == "GET") read_requesthdrs(&rio); //rio의 헤더를 읽어서 버퍼에 저장
   read_requesthdrs(&rio); //rio의 헤더를 읽어서 버퍼에 저장
+
+  http_version = version;
 
   /* URI 분석 / Parse URI from GET request */
   is_static = parse_uri(uri, filename, cgiargs); //uri를 분석해서 filename과 cgiargs에 저장  
@@ -75,14 +86,14 @@ void doit(int fd){
       clienterror(fd, filename, "403", "Forbidden", "Tiny couldn't read the file"); //에러메시지 출력
       return;
     }
-  serve_static(fd, filename, sbuf.st_size); //정적 컨텐츠 제공
+  serve_static(fd, filename, sbuf.st_size, method); //정적 컨텐츠 제공
   }
   else{
     if(!S_ISREG(sbuf.st_mode) || (!S_IXUSR & sbuf.st_mode)){ //파일이 보통파일이 아니거나 실행 권한이 없으면
       clienterror(fd, filename, "403", "Forbidden", "Tiny couldn't run the GCI program"); //에러메시지 출력
       return;
     }
-  serve_dynamic(fd, filename, cgiargs); //동적 컨텐츠 제공
+  serve_dynamic(fd, filename, cgiargs, method); //동적 컨텐츠 제공
   }  
 }
 
@@ -98,7 +109,7 @@ void clienterror(int fd, char*cause, char *errnum, char *shortmsg, char *longmsg
   sprintf(body, "%s<hr><em>The Tiny Web server</em>\r\n", body); //body에 문자열 저장
 
   /* HTTP 응답 헤더 생성 - Build the HTTP response header */
-  sprintf(buf, "HTTP/1.0 %s %s\r\n", errnum, shortmsg); //buf에 문자열 저장
+  sprintf(buf, "%s %s %s\r\n", http_version, errnum, shortmsg); //buf에 문자열 저장
   Rio_writen(fd, buf, strlen(buf)); //rio의 버퍼에 buf의 내용을 쓰기
   sprintf(buf, "Content-type: text/html\r\n"); //buf에 문자열 저장
   Rio_writen(fd, buf, strlen(buf)); //rio의 버퍼에 buf의 내용을 쓰기
@@ -141,11 +152,11 @@ int parse_uri(char *uri, char *filename, char *cgiargs){
   }
 }
 
-void serve_static(int fd, char *filename, int filesize){
+void serve_static(int fd, char *filename, int filesize, char* method){
   int srcfd; //파일 식별자 생성
   char *srcp, filetype[MAXLINE], buf[MAXBUF]; //포인터 생성, 문자열 생성, 버퍼 생성
   get_filetype(filename, filetype); //filename의 파일 타입을 filetype에 저장
-  sprintf(buf, "HTTP/1.0 200 OK\r\n"); //buf에 문자열 저장
+  sprintf(buf, "%s 200 OK\r\n", http_version); //buf에 문자열 저장
   sprintf(buf, "%sServer: Tiny Web Server\r\n", buf); //buf에 문자열 저장
   sprintf(buf, "%sConnection: close\r\n", buf); //buf에 문자열 저장
   sprintf(buf, "%sContent-length: %d\r\n", buf, filesize); //buf에 문자열 저장
@@ -153,7 +164,10 @@ void serve_static(int fd, char *filename, int filesize){
   Rio_writen(fd, buf, strlen(buf)); //rio의 버퍼에 buf의 내용을 쓰기
   printf("Response headers:\n"); //출력
   printf("%s", buf); //buf 출력
-
+  
+  if (strcasecmp(method, "HEAD") == 0) { //method가 GET이면
+   return;
+  }
   srcfd = Open(filename, O_RDONLY, 0); //filename을 읽기 전용으로 오픈
   // srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0); //srcfd의 파일을 filesize만큼 메모리에 매핑 
   
@@ -165,14 +179,15 @@ void serve_static(int fd, char *filename, int filesize){
   free(srcp); //srcp의 메모리 해제
 }
 
-void serve_dynamic(int fd, char *filename, char *cgiargs){
+void serve_dynamic(int fd, char *filename, char *cgiargs, char* method){
   char buf[MAXLINE], *emptylist[] = {NULL}; //버퍼 생성, 포인터 배열 생성
-  sprintf(buf, "HTTP/1.0 200 OK\r\n"); //buf에 문자열 저장
+  sprintf(buf, "%s 200 OK\r\n", http_version); //buf에 문자열 저장
   Rio_writen(fd, buf, strlen(buf)); //rio의 버퍼에 buf의 내용을 쓰기
   sprintf(buf, "Server: Tiny Web Server\r\n"); //buf에 문자열 저장
   Rio_writen(fd, buf, strlen(buf)); //rio의 버퍼에 buf의 내용을 쓰기
   if(Fork() == 0){ //자식 프로세스 생성
     setenv("QUERY_STRING", cgiargs, 1); //환경변수 설정
+    setenv("REQUEST_METHOD", method, 1); //환경변수 설정
     Dup2(fd, STDOUT_FILENO); //fd를 표준 출력으로 복사
     Execve(filename, emptylist, environ); //filename을 실행
   }
@@ -190,4 +205,16 @@ void get_filetype(char *filename, char *filetype){
     strcpy(filetype, "video/MP4"); //filetype에 "video/mp4" 저장
   else
     strcpy(filetype, "text/plain"); //filetype에 "text/plain" 저장
+}
+
+void echo(int connfd) 
+{
+    size_t n; 
+    char buf[MAXLINE]; 
+    rio_t rio;
+    Rio_readinitb(&rio, connfd);
+    while((n = Rio_readlineb(&rio, buf, MAXLINE)) != 0) { //line:netp:echo:eof
+	    printf("server received %d bytes\n", (int)n);
+	    Rio_writen(connfd, buf, n);
+    }
 }
