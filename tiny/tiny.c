@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
   while (1) {
     clientlen = sizeof(clientaddr);
     connfd = Accept(listenfd, (SA *)&clientaddr,
-                    &clientlen);  // line:netp:tiny:accept
+                    &clientlen);  // line:netp:tiny:accept 
     Getnameinfo((SA *)&clientaddr, clientlen, hostname, MAXLINE, port, MAXLINE,
                 0);
     printf("Accepted connection from (%s, %s)\n", hostname, port);
@@ -120,17 +120,23 @@ void clienterror(int fd, char*cause, char *errnum, char *shortmsg, char *longmsg
 
 void read_requesthdrs(rio_t *rp){
   char buf[MAXLINE]; //버퍼 생성
+  
   Rio_readlineb(rp, buf, MAXLINE); //rio의 버퍼에서 한 개의 텍스트 라인을 읽어 buf에 저장
+  printf("%s", buf); //buf 출력
+
   while(strcmp(buf, "\r\n")){ //buf가 "\r\n"이 아니면
     Rio_readlineb(rp, buf, MAXLINE); //rio의 버퍼에서 한 개의 텍스트 라인을 읽어 buf에 저장
     printf("%s", buf); //buf 출력
   }
+
   return;
 }
 
 int parse_uri(char *uri, char *filename, char *cgiargs){
   char *ptr; //포인터 생성
-  if(!strstr(uri, "cgi-bin")){ //uri에 "cgi-bin"이 없으면
+
+  if(!strstr(uri, "cgi-bin"))
+  { //uri에 "cgi-bin"이 없으면
     strcpy(cgiargs, ""); //cgiargs에 "" 저장
     strcpy(filename, "."); //filename에 "." 저장
     strcat(filename, uri); //filename에 uri를 이어붙임
@@ -155,6 +161,8 @@ int parse_uri(char *uri, char *filename, char *cgiargs){
 void serve_static(int fd, char *filename, int filesize, char* method){
   int srcfd; //파일 식별자 생성
   char *srcp, filetype[MAXLINE], buf[MAXBUF]; //포인터 생성, 문자열 생성, 버퍼 생성
+  rio_t rio;
+
   get_filetype(filename, filetype); //filename의 파일 타입을 filetype에 저장
   sprintf(buf, "%s 200 OK\r\n", http_version); //buf에 문자열 저장
   sprintf(buf, "%sServer: Tiny Web Server\r\n", buf); //buf에 문자열 저장
@@ -165,13 +173,14 @@ void serve_static(int fd, char *filename, int filesize, char* method){
   printf("Response headers:\n"); //출력
   printf("%s", buf); //buf 출력
   
-  if (strcasecmp(method, "HEAD") == 0) { //method가 GET이면
+  if (strcasecmp(method, "HEAD") == 0) { 
    return;
   }
   srcfd = Open(filename, O_RDONLY, 0); //filename을 읽기 전용으로 오픈
   // srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0); //srcfd의 파일을 filesize만큼 메모리에 매핑 
   
   srcp = (char *)malloc(filesize); //filesize만큼의 메모리 할당
+  Rio_readinitb(&rio, srcfd);
   Rio_readn(srcfd, srcp, filesize); //srcfd의 내용을 srcp에 저장
   Close(srcfd); //srcfd 닫기
   Rio_writen(fd, srcp, filesize); //rio의 버퍼에 srcp의 내용을 쓰기
@@ -181,11 +190,13 @@ void serve_static(int fd, char *filename, int filesize, char* method){
 
 void serve_dynamic(int fd, char *filename, char *cgiargs, char* method){
   char buf[MAXLINE], *emptylist[] = {NULL}; //버퍼 생성, 포인터 배열 생성
-  sprintf(buf, "%s 200 OK\r\n", http_version); //buf에 문자열 저장
+  sprintf(buf, "HTTP/1.0 200 OK\r\n"); //buf에 문자열 저장
   Rio_writen(fd, buf, strlen(buf)); //rio의 버퍼에 buf의 내용을 쓰기
   sprintf(buf, "Server: Tiny Web Server\r\n"); //buf에 문자열 저장
   Rio_writen(fd, buf, strlen(buf)); //rio의 버퍼에 buf의 내용을 쓰기
-  if(Fork() == 0){ //자식 프로세스 생성
+
+  if(Fork() == 0)
+  { //자식 프로세스 생성
     setenv("QUERY_STRING", cgiargs, 1); //환경변수 설정
     setenv("REQUEST_METHOD", method, 1); //환경변수 설정
     Dup2(fd, STDOUT_FILENO); //fd를 표준 출력으로 복사
