@@ -52,16 +52,6 @@ int main(int argc, char **argv) {
   // printf("%s", user_agent_hdr);
 }
 
-// void *thread(void *vargp)
-// {
-//   int clientfd = *((int *)vargp);
-//   Pthread_detach(pthread_self());
-//   Free(vargp);
-//   doit(clientfd);
-//   Close(clientfd);
-//   return NULL;
-// }
-
 void doit(int clientfd){
   int serverfd, content_length; 
   // struct stat sbuf; //파일의 상태를 저장하는 구조체
@@ -166,9 +156,6 @@ int parse_uri(char *uri, char *hostname, int *port, char *path){
   }
 }
 
-
-
-
 void read_requesthdrs(rio_t *request_rio, void *request_buf, int serverfd, char *hostname, char *port)
 {
   int is_host_exist;
@@ -232,3 +219,25 @@ void read_requesthdrs(rio_t *request_rio, void *request_buf, int serverfd, char 
   return;
 }
 
+
+//    if(!strstr(uri, "cgi-bin")){ //uri에 "cgi-bin"이 없으면
+//     strcpy(cgiargs, ""); //cgiargs에 "" 저장
+//     strcpy(filename, "."); //filename에 "." 저장
+//     strcat(filename, uri); //filename에 uri를 이어붙임
+//     if(uri[strlen(uri)-1] == '/') //uri의 마지막 문자가 '/'이면
+//       strcat(filename, "home.html"); //filename에 "home.html"을 이어붙임
+//     return 1; //1 반환
+//   }
+//   else{
+//     ptr = index(uri, '?'); //uri에서 '?'의 위치를 ptr에 저장
+//     if(ptr){ //ptr이 NULL이 아니면
+//       strcpy(cgiargs, ptr+1); //cgiargs에 ptr+1의 내용을 복사
+//       *ptr = '\0'; //ptr에 '\0' 저장
+//     }
+//     else
+//       strcpy(cgiargs, ""); //cgiargs에 "" 저장
+//     strcpy(filename, "."); //filename에 "." 저장
+//     strcat(filename, uri); //filename에 uri를 이어붙임
+//     return 0; //0 반환
+//   }
+// }
