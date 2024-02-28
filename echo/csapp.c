@@ -1022,16 +1022,30 @@ int open_clientfd(char *hostname, char *port)
 int open_listenfd(char *port)
 {
     struct addrinfo hints, *listp, *p;
+    //  OS의 netAPI를 이용, 주소에 관한 정보들
+    // hints는 주로 조건지정할 때 사용 (특정 유형의 소켓이나 프로토콜을 요청할 때)
+    // listp와 p는 구조체를 가리키는 포인터 (listp는 시작지점용, p는 순회용)
+
     int listenfd, rc, optval = 1;
+    // optval는 optionValue, 소켓옵션의 값
 
     /* Get a list of potential server addresses */
-    memset(&hints, 0, sizeof(struct addrinfo));
+    memset(&hints, 0, sizeof(struct addrinfo));  // 메모리영역 hints 부분의 addrinfo 크기만큼을 특정값 0으로 초기화
     hints.ai_socktype = SOCK_STREAM;             /* Accept connections */
     hints.ai_flags = AI_PASSIVE | AI_ADDRCONFIG; /* ... on any IP address */
-    hints.ai_flags |= AI_NUMERICSERV;            /* ... using port number */
-    if ((rc = getaddrinfo(NULL, port, &hints, &listp)) != 0)
+    // AI_PASSIVE 0x0001	/* Socket address is intended for `bind'.  */
+    // 이 플래그는 소켓 주소가 bind 연산에 사용될 것임을 나타냄
+    // INADDR_ANY 또는 in6addr_any의 경우, 시스템에 설정된 모든 IP주소에 대해 연결을 기다려라.
+    // AI_ADDRCONFIG 0x0020	/* Use configuration of this host to choose returned address type..  */
+    // config : OS시스템의 변수, 환경설정 등
+
+    hints.ai_flags |= AI_NUMERICSERV; /* ... using port number, 호스트 네임 쓰지말라는 플래그 */
+    // 이것이 설정되어 있으면, 숫자 IP주소만 처리됨.
+
+    if ((rc = getaddrinfo(NULL, port, &hints, &listp)) != 0) //
     {
         fprintf(stderr, "getaddrinfo failed (port %s): %s\n", port, gai_strerror(rc));
+        // gai_strerror : getaddrinfo의 서브루틴 함수
         return -2;
     }
 
@@ -1049,6 +1063,7 @@ int open_listenfd(char *port)
         /* Bind the descriptor to the address */
         if (bind(listenfd, p->ai_addr, p->ai_addrlen) == 0)
             break; /* Success */
+
         if (close(listenfd) < 0)
         { /* Bind failed, try the next */
             fprintf(stderr, "open_listenfd close failed: %s\n", strerror(errno));
@@ -1076,16 +1091,17 @@ int open_listenfd(char *port)
  ****************************************************/
 int Open_clientfd(char *hostname, char *port)
 {
-    int rc;
+    int rc; //  Return Code
 
     if ((rc = open_clientfd(hostname, port)) < 0)
         unix_error("Open_clientfd error");
     return rc;
 }
 
+/* port번호 주솟값을 토대로 */
 int Open_listenfd(char *port)
 {
-    int rc;
+    int rc; //  Return Code
 
     if ((rc = open_listenfd(port)) < 0)
         unix_error("Open_listenfd error");
