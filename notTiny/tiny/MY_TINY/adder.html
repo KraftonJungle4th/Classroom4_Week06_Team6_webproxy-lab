@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>test</title>
+    <meta charset="UTF-8">
+</head>
+
+<body>
+    <div align="middle">
+        <div style="border: 0px; border-radius: 8px; background-color: #efefef; margin: 4px; padding: 6px;">
+            <form id="sub-form" method="GET" action="cgi-bin/adder">
+                <fieldset>
+                    <legend>수 더하기</legend>
+                    <label>숫자1: <input type="range" id="number_1" size="30" value="typeNumber1"> 수1 </label>
+                    <label>숫자2: <input type="number" id="number_2" size="3" value="typeNumber2"> 수2 </label>
+                    <label> = </label>
+                    <input type="submit" value="sum">
+                    <input type="reset">
+                    <input type="hidden" name="stash" value="stashedValue">
+                </fieldset>
+            </form>
+        </div>
+        <div style="border: 0px; border-radius: 8px; background-color: #efefef; margin: 4px; padding: 6px;">
+            test-text
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,6 +1,8 @@
 {
     "files.associations": {
-        "types.h": "c"
+        "types.h": "c",
+        "csapp.h": "c",
+        "in.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }
