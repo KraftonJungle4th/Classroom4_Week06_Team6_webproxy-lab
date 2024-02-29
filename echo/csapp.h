@@ -15,6 +15,7 @@
 #include <signal.h>
 #include <dirent.h>
 #include <sys/time.h>
+#include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -145,8 +146,7 @@ int Accept(int s, struct sockaddr *addr, socklen_t *addrlen);
 void Connect(int sockfd, struct sockaddr *serv_addr, int addrlen);
 
 /* Protocol independent wrappers */
-void Getaddrinfo(const char *node, const char *service, 
-                 const struct addrinfo *hints, struct addrinfo **res);
+void Getaddrinfo(const char *node, const char *service, const struct addrinfo *hints, struct addrinfo **res);
 void Getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host, 
                  size_t hostlen, char *serv, size_t servlen, int flags);
 void Freeaddrinfo(struct addrinfo *res);
